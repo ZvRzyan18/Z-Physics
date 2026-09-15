@@ -1,4 +1,4 @@
-# Z-Physics
+# ZP-Physics
 2D physics engine in C11, Designed to be fast, minimal and efficient 
 
 NOTE : This engine is still currently unstable.
