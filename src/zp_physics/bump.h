@@ -1,7 +1,9 @@
 #ifndef ZP_BUMP_H
 #define ZP_BUMP_H
 
-#include "z_physics/hint.h"
+#include "zp_physics/hint.h"
+
+typedef size_t   zp_bump_ptr;
 
 typedef struct {
  uint8_t *_bytes;

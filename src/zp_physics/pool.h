@@ -1,9 +1,12 @@
 #ifndef ZP_POOL_H
 #define ZP_POOL_H
 
-#include "z_physics/hint.h"
-#include "z_physics/type.h"
+#include "zp_physics/hint.h"
 #include <assert.h>
+
+typedef uint32_t zp_pool_id;
+#define ZP_POOL_NULL_ID 0xFFFFFFFF
+
 
 typedef struct {
  uint8_t    *_bytes;

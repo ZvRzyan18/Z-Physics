@@ -4,9 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define ZP_USE_LOGARITHMIC_DAMPING_PENETRATION_ERROR 
-
-
 
 #ifdef __cplusplus
 #define zp_restrict __restrict
@@ -62,11 +59,11 @@
 #define ZP_NEON
 
 #if !defined(__aarch64__) && !defined(__ARM_FEATURE_FMA)
-#define neon_fma vmla_f32
-#define neon_fmaq vmlaq_f32
+#define __zp_neon_fma vmla_f32
+#define __zp_neon_fmaq vmlaq_f32
 #else
-#define neon_fma vfma_f32
-#define neon_fmaq vfmaq_f32
+#define __zp_neon_fma vfma_f32
+#define __zp_neon_fmaq vfmaq_f32
 #endif
 
 #endif

@@ -1,3 +1,15 @@
-version 0.1.0
+# version 0.1.0
 
-upload updated files.
+• upload updated files
+
+• rename it to zp_physics
+
+• clean interface, isolate internal stuff
+
+• allow object to be removable efficiently
+
+• add relaxation after the position update
+
+• switch from ln(x) to log2(x) for position error damping
+
+

@@ -1,8 +1,8 @@
 #ifndef ZP_COLLISION2D_H
 #define ZP_COLLISION2D_H
 
-#include "z_physics/hint.h"
-#include "z_physics/core2d/manifold2d.h"
+#include "zp_physics/hint.h"
+#include "zp_physics/core2d/manifold2d.h"
 
 ZP_CPP_BEGIN
 

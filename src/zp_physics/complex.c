@@ -1,4 +1,4 @@
-#include "z_physics/complex.h"
+#include "zp_physics/complex.h"
 
 zp_complex zp_complex_identity = {.x = 1.0f, .y = 0.0f};
 zp_quaternion zp_quaternion_identity = {.x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f};
@@ -45,41 +45,6 @@ float zp_cangle(const zp_complex c) {
  return zp_atan2(c.y, c.x);
 }
 
-
-zp_quaternion zp_qfromeulerangle(float roll, const float pitch, const float yaw) {
- zp_quaternion out;
- float cy, sy;
- float cp, sp;
- float cr, sr;
-
- zp_sincos(yaw * 0.5f, &sy, &cy);
- zp_sincos(pitch * 0.5f, &sp, &cp);
- zp_sincos(roll * 0.5f, &sr, &cr);
- 
- const float crcp = cr * cp;
- const float crsp = cr * sp;
- const float srcp = sr * cp;
- const float srsp = sr * sp;
- 
- out.x = zp_fma(srcp, cy, -(crsp * sy));
- out.y = zp_fma(crsp, cy, srcp * sy);
- out.z = zp_fma(crcp, sy, -(srsp * cy));
- out.w = zp_fma(crcp, cy, srsp * sy);
- return out;
-}
-
-
-zp_vec3 zp_qtoeulerangle(const zp_quaternion a) {
- zp_vec3 out;
- const float y2 = a.y * a.y;
- float mpitch = 2.0f * zp_fma(a.w, a.y, -(a.z * a.x));
- /* asin is already clamped and will never return inf/nan */
- out.y = zp_asin(mpitch);
- /* TODO : use vector instruction in atan2 */
- out.x = zp_atan2(2.0f * zp_fma(a.w, a.x, a.y * a.z), 1.0f - 2.0f * (a.x * a.x + y2));
- out.z = zp_atan2(2.0f * zp_fma(a.w, a.z, a.x * a.y), 1.0f - 2.0f * (y2 + a.z * a.z));
- return out;
-}
 
 
 zp_quaternion zp_qfromaxisangle(const float a, const float x, const float y, const float z) {

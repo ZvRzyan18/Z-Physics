@@ -1,7 +1,7 @@
 #ifndef ZP_MATH_H
 #define ZP_MATH_H
 
-#include "z_physics/hint.h"
+#include "zp_physics/hint.h"
 
 ZP_CPP_BEGIN
 
@@ -133,7 +133,7 @@ zp_pure float zp_atan(const float x);
 zp_pure float zp_atan2(const float y, const float x);
 
 /*
- exponentials and logarithm
+ exponential and logarithm
 */
 zp_pure float zp_log2(const float x);
 zp_pure float zp_exp2(const float x);

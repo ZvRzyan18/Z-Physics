@@ -1,9 +1,12 @@
 #ifndef ZP_CONTAINER_H
 #define ZP_CONTAINER_H
 
-#include "z_physics/hint.h"
-#include "z_physics/type.h"
+#include "zp_physics/hint.h"
 #include <assert.h>
+
+
+typedef uint16_t zp_container_id;
+#define ZP_CONTAINER_NULL_ID 0xFFFF
 
 typedef struct {
  uint8_t  *_bytes;

@@ -1,10 +1,8 @@
 #ifndef ZP_MANIFOLD2D_H
 #define ZP_MANIFOLD2D_H
 
-#include "z_physics/hint.h"
-#include "z_physics/type.h"
-#include "z_physics/vector.h"
-#include "z_physics/core2d/body2d.h"
+#include "zp_physics/vector.h"
+#include "zp_physics/core2d/body2d.h"
 
 /*
  feature pair of contact id.

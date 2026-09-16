@@ -1,8 +1,8 @@
 #ifndef ZP_COMPLEX_H
 #define ZP_COMPLEX_H
 
-#include "z_physics/type.h"
-#include "z_physics/math.h"
+#include "zp_physics/types.h"
+#include "zp_physics/math.h"
 
 ZP_CPP_BEGIN
 
@@ -69,9 +69,6 @@ zp_const zp_inline zp_quaternion zp_qconj(const zp_quaternion a) {
  out.w = a.w;
  return out;
 }
-
-zp_quaternion zp_qfromeulerangle(const float roll, const float pitch, const float yaw);
-zp_vec3 zp_qtoeulerangle(const zp_quaternion a);
 
 zp_quaternion zp_qfromaxisangle(const float a, const float x, const float y, const float z);
 zp_vec4 zp_qtoaxisangle(const zp_quaternion a);

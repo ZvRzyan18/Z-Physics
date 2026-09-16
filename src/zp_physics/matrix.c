@@ -1,14 +1,8 @@
-#include "z_physics/matrix.h"
-#include "z_physics/math.h"
+#include "zp_physics/matrix.h"
+#include "zp_physics/math.h"
+#include "zp_physics/complex.h"
 
 
-
-zp_mat2x2 zp_mat2x2_identity = {
- .v = {
-  {1.0f, 0.0f},
-  {0.0f, 1.0f}
- }
-};
 
 zp_mat3x3 zp_mat3x3_identity = {
  .v = {
@@ -99,13 +93,20 @@ zp_mat4x4 zp_fromquaternion4(const zp_vec4 a) {
 }
 
 
-zp_mat2x2 zp_transpose2(const zp_mat2x2 a) {
- zp_mat2x2 out;
- out.v[0][0] = a.v[0][0];
- out.v[0][1] = a.v[1][0];
+
+zp_mat3x3 zp_mat3x3_transform(const zp_complex rotation, const zp_vec2 position) {
+ zp_mat3x3 out;
+ out.v[0][0] = zp_creal(rotation);
+ out.v[0][1] = zp_cimag(rotation);
+ out.v[0][2] = 0.0f;
  
- out.v[1][0] = a.v[0][1];
- out.v[1][1] = a.v[1][1];
+ out.v[1][0] = -zp_cimag(rotation);
+ out.v[1][1] = zp_creal(rotation);
+ out.v[1][2] = 0.0f;
+ 
+ out.v[2][0] = position.x;
+ out.v[2][1] = position.y;
+ out.v[2][2] = 1.0f;
  return out;
 }
 
@@ -151,26 +152,7 @@ zp_mat4x4 zp_transpose4(const zp_mat4x4 a) {
  return out;
 }
 
-/*
- column major multiplication
-*/
-zp_mat2x2 zp_mulmm2(const zp_mat2x2 a, const zp_mat2x2 b) {
- zp_mat2x2 out;
-/*
- out.v[0][0] = a.v[0][0] * b.v[0][0] + a.v[1][0] * b.v[0][1];
- out.v[0][1] = a.v[0][1] * b.v[0][0] + a.v[1][1] * b.v[0][1];
- 
- out.v[1][0] = a.v[0][0] * b.v[1][0] + a.v[1][0] * b.v[1][1];
- out.v[1][1] = a.v[0][1] * b.v[1][0] + a.v[1][1] * b.v[1][1];
-*/
- out.v[0][0] = zp_fma(a.v[0][0], b.v[0][0], a.v[1][0] * b.v[0][1]);
- out.v[0][1] = zp_fma(a.v[0][1], b.v[0][0], a.v[1][1] * b.v[0][1]);
- 
- out.v[1][0] = zp_fma(a.v[0][0], b.v[1][0], a.v[1][0] * b.v[1][1]);
- out.v[1][1] = zp_fma(a.v[0][1], b.v[1][0], a.v[1][1] * b.v[1][1]);
 
- return out;
-}
 
 zp_mat3x3 zp_mulmm3(const zp_mat3x3 a, const zp_mat3x3 b) {
  zp_mat3x3 out;
@@ -249,12 +231,6 @@ zp_mat4x4 zp_mulmm4(const zp_mat4x4 a, const zp_mat4x4 b) {
 }
 
 
-zp_vec2 zp_mulm2v2(const zp_mat2x2 a, const zp_vec2 b) {
- zp_vec2 out;
- out.x = zp_fma(a.v[0][0], b.x, a.v[1][0] * b.y);
- out.y = zp_fma(a.v[0][1], b.x, a.v[1][1] * b.y);
- return out;
-}
 
 zp_vec3 zp_mulm3v3(const zp_mat3x3 a, const zp_vec3 b) {
  zp_vec3 out;

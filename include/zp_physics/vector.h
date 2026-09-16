@@ -1,25 +1,8 @@
 #ifndef ZP_VECTOR_H
 #define ZP_VECTOR_H
 
-#include "z_physics/math.h"
-
-/*
- NOTE : DONT OVERLAP THE VALUES POINTER, DOING SO MIGHT RESULT IN UNDEFINED BEHAVIOUR
-*/
-typedef union {
- struct {	float x, y; };
- float arr[2];
-} zp_vec2;
-
-typedef union {
- struct {	float x, y, z; };
- float arr[3];
-} zp_vec3;
-
-typedef union {
- struct {	float x, y, z, w; };
- float arr[4];
-} zp_vec4;
+#include "zp_physics/math.h"
+#include "zp_physics/types.h"
 
 zp_inline zp_vec2 zp_stv2(const float a) {
  zp_vec2 out;

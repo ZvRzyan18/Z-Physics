@@ -1,5 +1,5 @@
-#include "z_physics/core2d/manifold2d.h"
-#include "z_physics/matrix.h"
+#include "zp_physics/core2d/manifold2d.h"
+#include "zp_physics/matrix.h"
 #include <string.h>
 #include <assert.h>
 
@@ -43,24 +43,6 @@ void zp_manifold2d_combine(zp_manifold2d *const zp_restrict out, const zp_manifo
  out->_contacts[1] = contacts[1];
 }
 
-
-
-
-zp_noinline static zp_mat3x3 create_matrix(const zp_body2d *const zp_restrict a) {
- zp_mat3x3 out;
- out.v[0][0] = zp_creal(a->_head._rotation);
- out.v[0][1] = zp_cimag(a->_head._rotation);
- out.v[0][2] = 0.0f;
- 
- out.v[1][0] = -zp_cimag(a->_head._rotation);
- out.v[1][1] = zp_creal(a->_head._rotation);
- out.v[1][2] = 0.0f;
- 
- out.v[2][0] = a->_head._position.x;
- out.v[2][1] = a->_head._position.y;
- out.v[2][2] = 1.0f;
- return out;
-}
 
 
 
@@ -115,7 +97,7 @@ edges
   •--------•
       3
 */
-zp_noinline static void get_inc_edge(const zp_vec2 half_size, const zp_mat3x3 transform, const uint8_t index, zp_vec2 edge[2]) {
+zp_noinline static void obb_get_inc_edge(const zp_vec2 half_size, const zp_mat3x3 transform, const uint8_t index, zp_vec2 edge[2]) {
  zp_vec2 aa = zp_mul2(zp_load2(transform.v[0]), half_size);
  zp_vec2 bb = zp_mul2(zp_load2(transform.v[1]), half_size);
  zp_vec2 cc = zp_load2(transform.v[2]);
@@ -154,7 +136,7 @@ zp_noinline static void get_inc_edge(const zp_vec2 half_size, const zp_mat3x3 tr
   •--------•
      
 */
-zp_noinline static uint8_t clip_edge(zp_vec2 edge[2], const zp_vec2 normal, const float offset, const uint16_t edge_id, zp_contact2d_id ids[2]) {
+zp_noinline static uint8_t obb_clip_edge(zp_vec2 edge[2], const zp_vec2 normal, const float offset, const uint16_t edge_id, zp_contact2d_id ids[2]) {
  const float da = zp_dot2(normal, edge[0]) - offset;
  const float db = zp_dot2(normal, edge[1]) - offset;
  uint8_t poly_size = 0;
@@ -206,7 +188,7 @@ zp_noinline static uint8_t clip_edge(zp_vec2 edge[2], const zp_vec2 normal, cons
  OBB vs OBB
  src : http://www.r-5.org/files/books/computers/algo-list/realtime-3d/Christer_Ericson-Real-Time_Collision_Detection-EN.pdf
 */
-zp_inline float extent_size(const zp_mat3x3 obj_t, const zp_vec2 obj_hs, const zp_vec2 axis) {
+zp_inline float obb_extent_size(const zp_mat3x3 obj_t, const zp_vec2 obj_hs, const zp_vec2 axis) {
  return zp_fma(obj_hs.x, zp_abs(zp_dot2(axis, zp_load2(obj_t.v[0]))), obj_hs.y * zp_abs(zp_dot2(axis, zp_load2(obj_t.v[1]))) );
 }
 
@@ -214,14 +196,21 @@ zp_inline float extent_size(const zp_mat3x3 obj_t, const zp_vec2 obj_hs, const z
  instead of polygon, box treated as obb.
 */
 uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_box2d *const zp_restrict a, const zp_box2d *const zp_restrict b) {
- const zp_mat3x3 transform_a = create_matrix((const zp_body2d*)a);
- const zp_mat3x3 transform_b = create_matrix((const zp_body2d*)b);
- 
- zp_vec2 diff_pos = zp_sub2(zp_load2(transform_b.v[2]), zp_load2(transform_a.v[2]));
+ zp_complex rotation_a = a->_head._rotation;
+ zp_complex rotation_b = b->_head._rotation;
+
+ zp_vec2 position_a = a->_head._position;
+ zp_vec2 position_b = b->_head._position;
+
  zp_vec2 half_size[2];
  half_size[0] = a->_half_size;
  half_size[1] = b->_half_size;
   
+ zp_mat3x3 transform_a = zp_mat3x3_transform(rotation_a, position_a);
+ zp_mat3x3 transform_b = zp_mat3x3_transform(rotation_b, position_b);
+ 
+ zp_vec2 diff_pos = zp_sub2(position_b, position_a);
+ 
  float ra, rb, dist, depth_a, depth_b;
  uint8_t index_a, index_b;
  zp_vec2 axis;
@@ -236,7 +225,7 @@ uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_
   axis = zp_load2(transform_a.v[i]);
   dist = zp_abs(zp_dot2(diff_pos, axis));   
   ra = half_size[0].arr[i];
-  rb = extent_size(transform_b, half_size[1], axis);
+  rb = obb_extent_size(transform_b, half_size[1], axis);
   if(dist > (ra + rb)) return 0;
   dist = ra + rb - dist;
   if(dist < depth_a) {
@@ -248,7 +237,7 @@ uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_
  for(uint8_t i = 0; i < 2; i++) {
   axis = zp_load2(transform_b.v[i]);
   dist = zp_abs(zp_dot2(diff_pos, axis));   
-  ra = extent_size(transform_a, half_size[0], axis);
+  ra = obb_extent_size(transform_a, half_size[0], axis);
   rb = half_size[1].arr[i];
   if(dist > (ra + rb)) return 0;
   dist = ra + rb - dist;
@@ -321,7 +310,7 @@ uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_
  ids[1].out_edge2 = BOX_PERP_SIDE[inc_edge_index][1];
 
  zp_vec2 edge[2];
- get_inc_edge(inc_half_size, inc_transform, inc_edge_index, edge);
+ obb_get_inc_edge(inc_half_size, inc_transform, inc_edge_index, edge);
 
  uint8_t vertex_count;
  const uint8_t ref_side_index = BOX_SIDE_AXIS_LUT[ref_index];
@@ -329,18 +318,20 @@ uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_
  float pos_offset = zp_dot2(zp_load2(ref_transform.v[2]), ref_side_axis) + ref_half_size.arr[ref_side_index];
  float neg_offset = -zp_dot2(zp_load2(ref_transform.v[2]), ref_side_axis) + ref_half_size.arr[ref_side_index];
 
- vertex_count = clip_edge(edge, zp_neg2(ref_side_axis), neg_offset, BOX_NEGATE_AXIS[ref_side_index], ids);
+ vertex_count = obb_clip_edge(edge, zp_neg2(ref_side_axis), neg_offset, BOX_NEGATE_AXIS[ref_side_index], ids);
  if(vertex_count < 2) return 0;
 
- vertex_count = clip_edge(edge, ref_side_axis, pos_offset, ref_side_index, ids); 
+ vertex_count = obb_clip_edge(edge, ref_side_axis, pos_offset, ref_side_index, ids); 
  if(vertex_count < 2) return 0;
 
- /* expected to be normalized, so the inverse is just as simple as conjugate */ 
- zp_complex inv_ref_rotation = zp_cconj(ref_body->_head._rotation);
- zp_complex inv_inc_rotation = zp_cconj(inc_body->_head._rotation);
  
  const float front = zp_dot2(zp_load2(ref_transform.v[2]), ref_axis) + ref_half_size.arr[ref_index];
  if(swapped) {
+
+  /* expected to be normalized, so the inverse is just as simple as conjugate */ 
+  zp_complex inv_ref_rotation = zp_cconj(rotation_b);
+  zp_complex inv_inc_rotation = zp_cconj(rotation_a);
+
   for(uint8_t i = 0; i < 2; i++) {
    float depth = zp_dot2(ref_axis, edge[i]) - front;
    if(depth < 0.0f) {
@@ -356,6 +347,11 @@ uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_
    }
   }
  } else {
+
+  /* expected to be normalized, so the inverse is just as simple as conjugate */ 
+  zp_complex inv_ref_rotation = zp_cconj(rotation_a);
+  zp_complex inv_inc_rotation = zp_cconj(rotation_b);
+
   for(uint8_t i = 0; i < 2; i++) {
    float depth = zp_dot2(ref_axis, edge[i]) - front;
    if(depth < 0.0f) {

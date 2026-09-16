@@ -1,5 +1,5 @@
-#include "z_physics/core2d/collision2d.h"
-#include "z_physics/core2d/state2d.h"
+#include "zp_physics/core2d/collision2d.h"
+#include "zp_physics/core2d.h"
 #include <assert.h>
 
 typedef uint8_t (*zp_collider_function)(zp_manifold2d *const zp_restrict out, const zp_body2d *const zp_restrict a, const zp_body2d *const zp_restrict b);

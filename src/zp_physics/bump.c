@@ -1,5 +1,5 @@
-#include "z_physics/bump.h"
-#include "z_physics/math.h"
+#include "zp_physics/bump.h"
+#include "zp_physics/math.h"
 #include <stdlib.h>
 #include <assert.h>
 

@@ -1,30 +1,9 @@
 #ifndef ZP_BODY2D_H
 #define ZP_BODY2D_H
 
-#include "z_physics/hint.h"
-#include "z_physics/type.h"
-#include "z_physics/complex.h"
-
-
-/*
- create infos
-*/
-typedef struct {
- uint16_t _flags; /* TODO : place it at the bottom and then use offset of?*/
- zp_vec2  _position;
- zp_vec2  _velocity;
- zp_vec2  _force;
- zp_vec2  _half_size;
- float    _linear_damping;
- float    _rotation;
- float    _omega;
- float    _torque;
- float    _density;
- float    _angular_damping;
- float    _restitution;
- float    _friction;
-} zp_create_body2d;
-
+#include "zp_physics/core2d.h"
+#include "zp_physics/complex.h"
+#include "zp_physics/container.h"
 
 /*
  bodies
