@@ -176,7 +176,7 @@ void zp_manifold2d_soft_solve_contact(zp_manifold2d *const zp_restrict m, void *
   }
 
   /* logarithmic with damping-like behaviour */
-  penetration_error = zp_log2(penetration_error + 1.0f);
+  penetration_error = zp_log2(penetration_error + 1.0f) * 0.69314718f;
   
 
   if(vn < contact->_bias) {
@@ -308,7 +308,7 @@ void zp_manifold2d_soft_relaxation(zp_manifold2d *const zp_restrict m, void *con
   }
 
   /* logarithmic with damping-like behaviour */
-  penetration_error = zp_log2(penetration_error + 1.0f);
+  penetration_error = zp_log2(penetration_error + 1.0f) * 0.69314718f;
   
   
   if(vn < contact->_bias) {
