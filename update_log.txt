@@ -10,6 +10,5 @@
 
 • add relaxation after the position update
 
-• switch from ln(x) to log2(x) for position error damping
 
 
