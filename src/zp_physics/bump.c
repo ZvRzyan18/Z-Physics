@@ -38,4 +38,3 @@ void zp_bump_reset(zp_bump *zp_restrict b, size_t offset) {
 
 
 
-
