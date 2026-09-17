@@ -196,16 +196,19 @@ zp_inline float obb_extent_size(const zp_mat3x3 obj_t, const zp_vec2 obj_hs, con
  instead of polygon, box treated as obb.
 */
 uint8_t zp_manifold2d_box_vs_box(zp_manifold2d *const zp_restrict out, const zp_box2d *const zp_restrict a, const zp_box2d *const zp_restrict b) {
- zp_complex rotation_a = a->_head._rotation;
- zp_complex rotation_b = b->_head._rotation;
-
- zp_vec2 position_a = a->_head._position;
- zp_vec2 position_b = b->_head._position;
-
  zp_vec2 half_size[2];
+ zp_complex rotation_a = a->_head._rotation;
+ zp_vec2 position_a = a->_head._position;
  half_size[0] = a->_half_size;
+ 
+ zp_compiler_memory_barrier();
+
+ zp_complex rotation_b = b->_head._rotation;
+ zp_vec2 position_b = b->_head._position;
  half_size[1] = b->_half_size;
-  
+ 
+ zp_compiler_memory_barrier();
+ 
  zp_mat3x3 transform_a = zp_mat3x3_transform(rotation_a, position_a);
  zp_mat3x3 transform_b = zp_mat3x3_transform(rotation_b, position_b);
  
