@@ -36,17 +36,38 @@
 #define zp_hot __attribute__((hot))
 #define zp_cold __attribute__((cold))
 
+#define zp_compiler_memory_barrier() __asm__ volatile("" ::: "memory");
+
 #elif defined(_MSC_VER)
+#include <intrin.h>
+
 
 #define zp_likely(x) (x)
 #define zp_unlikely(x) (x)
 #define zp_inline __forceinline static inline 
 #define zp_noinline __declspec(noinline)
+#define zp_unreachable() __assume(0)
+#define zp_const 
+#define zp_pure
+#define zp_hot 
+#define zp_cold 
+
+#define zp_compiler_memory_barrier() _ReadWriteBarrier()
+
+#else
+
+#define zp_likely(x)
+#define zp_unlikely(x)
+#define zp_inline
+#define zp_noinline
 #define zp_unreachable() 
 #define zp_const 
 #define zp_pure
 #define zp_hot 
 #define zp_cold 
+
+#define zp_compiler_memory_barrier() 
+
 #endif
 
 
