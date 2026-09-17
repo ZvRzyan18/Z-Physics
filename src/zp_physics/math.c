@@ -196,7 +196,7 @@ zp_pure float zp_asin(const float x) {
  float mx, mx1;
  mx = zp_min(zp_abs(x), 1.0f);
  
- if(mx > 1.0f) {
+ if(zp_unlikely(mx > 1.0f)) {
   return x < 0.0f ? -1.570796f : 1.570796f;
  }
  mx1 = zp_fma(ASIN[0], mx, ASIN[1]);
@@ -235,7 +235,7 @@ zp_pure float zp_acos(const float x) {
  float mx, mx1;
  mx = zp_min(zp_abs(x), 1.0f);
  
- if(mx > 1.0f) {
+ if(zp_unlikely(mx > 1.0f)) {
   return x < 0.0f ? 3.14159f : 0.0f;
  }
  mx1 = zp_fma(ACOS[0], mx, ACOS[1]);
@@ -299,12 +299,12 @@ zp_pure float zp_atan(const float x) {
  hi = mx > 1.0f;
  if(!hi) {
   x2 = mx * mx;
-  mx = mx + (mx * x2) * (ATAN[0] * x2 + ATAN[1]);
+  out = zp_fma((mx * x2), zp_fma(ATAN[0], x2, ATAN[1]), mx);
   return zp_copysign(mx, x);
  }
  mx = 1.0f / mx;
  x2 = mx * mx;
- out = mx + (mx * x2) * (ATAN[0] * x2 + ATAN[1]);
+ out = zp_fma((mx * x2), zp_fma(ATAN[0], x2, ATAN[1]), mx);
  out = 1.570796f - out;
  return zp_copysign(out, x);
 }
@@ -314,16 +314,25 @@ zp_pure float zp_atan(const float x) {
  because sin/cos = tan
 */
 zp_pure float zp_atan2(const float y, const float x) {
- if(x > 0.0f) {
-  return zp_atan(y / x);
- } else if(x < 0.0f) {
-  return zp_atan(y / x) + ((y >= 0.0f) ? 3.14159f : -3.14159f);
+ float ratio, mx, x2;
+ float ax = zp_abs(x);
+ float ay = zp_abs(y);
+
+ if(ax >= ay) {
+  ratio = ay / ax;
+  mx = ratio;
+  x2 = mx * mx;
+  mx = zp_fma((mx * x2), zp_fma(ATAN[0], x2, ATAN[1]), mx);
  } else {
-  return (y > 0.0f) ? 1.570796f : -1.570796f;
+  ratio = ax / ay;
+  mx = ratio;
+  x2 = mx * mx;
+  mx = 1.570796f - zp_fma((mx * x2), zp_fma(ATAN[0], x2, ATAN[1]), mx);
  }
- /* unreachable */
- zp_unreachable();
- return zp_nan();
+    
+ mx = (x < 0.0f) ? (3.14159f - mx) : mx;
+ mx = zp_copysign(mx, y);
+ return mx;
 }
 
 
