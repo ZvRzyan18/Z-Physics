@@ -10,5 +10,11 @@
 
 • add relaxation after the position update
 
+• improve memory access, via temp variables and barriers
 
+• removing inline assembly fma, compiler can freely optimize it with simd
+
+• optimize atan2
+
+• use unlikely hint (asin, acos) clamp
 

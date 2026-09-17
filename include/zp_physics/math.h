@@ -2,6 +2,7 @@
 #define ZP_MATH_H
 
 #include "zp_physics/hint.h"
+#include <math.h>
 
 ZP_CPP_BEGIN
 
@@ -33,9 +34,7 @@ zp_const zp_inline float zp_copysign(float a, float b) {
  __f_floatbits a_bits, b_bits;
  a_bits.f = a;
  b_bits.f = b;
- 
- a_bits.i &= 0x7FFFFFFF;
- a_bits.i |= b_bits.i & 0x80000000; 
+ a_bits.i = (a_bits.i & 0x7FFFFFFF) | (b_bits.i & 0x80000000); 
  return a_bits.f;
 }
 
@@ -43,6 +42,7 @@ zp_const zp_inline float zp_copysign(float a, float b) {
  use std fmaf instead?
 */
 zp_const zp_inline float zp_fma(const float a, const float b, const float c) {
+/*
 #if defined(__aarch64__)
  float result;
  __asm__ volatile(
@@ -52,8 +52,8 @@ zp_const zp_inline float zp_fma(const float a, const float b, const float c) {
  );
  return result;
 #else
+*/
  return a * b + c;
-#endif
 }
 
 /*

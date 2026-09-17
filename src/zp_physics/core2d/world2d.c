@@ -71,7 +71,7 @@ zp_hot void zp_world2d_update(zp_world2d *const zp_restrict world, const float d
  input._solver_substeps = world->_solver_substeps;
 
 
- float hertz = 12.33f;
+ float hertz = 9.33f;
  float damping_ratio = 2.6f;
  float omega = hertz * 6.28318530f;
  
@@ -125,6 +125,7 @@ zp_hot void zp_world2d_update(zp_world2d *const zp_restrict world, const float d
   zp_body2d_updatep(body_a, world, devided_dt);
  }
  /* relaxation, improve stability */
+ 
  for(uint16_t i = 0; i < world->_contacts._memory_pool._size; i++) {
   zp_contacthash2d_node *const node = ((zp_contacthash2d_node*)world->_contacts._memory_pool._bytes) + i;
   zp_manifold2d *const manifold = &node->_value;
