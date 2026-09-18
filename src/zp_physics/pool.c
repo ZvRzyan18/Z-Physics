@@ -20,18 +20,19 @@ zp_noinline zp_cold static int resize(zp_pool *const zp_restrict pool) {
  const size_t free_list_size = (size_t)new_pool._max_size * sizeof(zp_pool_id);
  const size_t bytes_size = (size_t)new_pool._max_size * (size_t)new_pool._stride;
  new_pool._bytes = (uint8_t*)malloc(free_list_size + bytes_size + ZP_MEMORY_ALIGNMENT);
- if(zp_unlikely(!new_pool._free_list))
+ if(zp_unlikely(!new_pool._bytes))
   return -1;
  new_pool._free_list = (zp_pool_id*)zp_alignto((uint64_t)(new_pool._bytes + bytes_size), ZP_MEMORY_ALIGNMENT);
 
  assert((((uint64_t)new_pool._bytes) % 2) == 0);
  assert((((uint64_t)new_pool._free_list) % ZP_MEMORY_ALIGNMENT) == 0);
 
- for(zp_pool_id i = new_pool._size; i < new_pool._max_size; i++)
-  new_pool._free_list[i] = i;
- 
  memcpy(new_pool._bytes, pool->_bytes, pool->_max_size * pool->_stride);
  memcpy(new_pool._free_list, pool->_free_list, pool->_max_size * sizeof(zp_pool_id));
+
+ for(zp_pool_id i = pool->_max_size; i < new_pool._max_size; i++)
+  new_pool._free_list[i] = i;
+ 
  zp_pool_destroy(pool);
  memcpy(pool, &new_pool, sizeof(zp_pool));
  return 0;
@@ -61,14 +62,15 @@ zp_cold int zp_pool_init(zp_pool *const zp_restrict pool, const uint16_t stride,
  assert((((uint64_t)pool->_bytes) % 2) == 0);
  assert((((uint64_t)pool->_free_list) % ZP_MEMORY_ALIGNMENT) == 0);
 
- for(zp_pool_id i = pool->_size; i < pool->_max_size; i++)
+ for(zp_pool_id i = 0; i < pool->_max_size; i++)
   pool->_free_list[i] = i;
   
  return 0;
 }
 
+
 zp_cold void zp_pool_destroy(zp_pool *const zp_restrict pool) {
- free(pool->_free_list);
+ free(pool->_bytes);
 }
 
 

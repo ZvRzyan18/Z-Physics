@@ -195,10 +195,6 @@ static const float ASIN[3] = {
 zp_pure float zp_asin(const float x) {
  float mx, mx1;
  mx = zp_min(zp_abs(x), 1.0f);
- 
- if(zp_unlikely(mx > 1.0f)) {
-  return x < 0.0f ? -1.570796f : 1.570796f;
- }
  mx1 = zp_fma(ASIN[0], mx, ASIN[1]);
  mx1 = zp_fma(mx1, mx, ASIN[2]);
  mx1 = mx1 * zp_sqrt(1.0f - mx);
@@ -234,10 +230,6 @@ static const float ACOS[2] = {
 zp_pure float zp_acos(const float x) {
  float mx, mx1;
  mx = zp_min(zp_abs(x), 1.0f);
- 
- if(zp_unlikely(mx > 1.0f)) {
-  return x < 0.0f ? 3.14159f : 0.0f;
- }
  mx1 = zp_fma(ACOS[0], mx, ACOS[1]);
  mx1 = mx1 * zp_sqrt(1.0f - mx);
  return ((x < 0.0f) ? 3.14159f - mx1 : mx1);
@@ -460,7 +452,11 @@ zp_pure float zp_exp2(const float x) {
  
  as the value increases it slowly approaches 1.0
  useful for smooth transition with clamped limits.
+
+ tanh(x) = (e ^ x - 1.0) / (e ^ x + 1.0);
+
 */
+/*
 zp_pure float zp_tanh(const float x) {
  if(zp_abs(x) >= 45.0f)
   return zp_copysign(1.0f, x);
@@ -468,7 +464,29 @@ zp_pure float zp_tanh(const float x) {
  float exponential = zp_exp2(2.0 * x * log2_e);
  return (exponential - 1.0) / (exponential + 1.0);
 }
+*/
+static const float TANH[6] = {
+ 9.49274892e-02f,
+-3.29312635e-01f,
 
+ 4.78187872e-02f,
+-3.72573327e-01f,
+ 9.85379375e-01f,
+ 1.03154878e-01f,
+};
+
+zp_pure float zp_tanh(const float x) {
+ float mx = zp_abs(x);
+ if(mx < 1.0) {
+  float x2 = mx * mx;
+  float mm = zp_fma((x2 * mx), zp_fma(TANH[0], x2, TANH[1]), mx);
+  return zp_copysign(mm, x);
+ } else if(mx < 3.0) {
+  float mm = zp_fma(zp_fma(zp_fma(TANH[2], mx, TANH[3]), mx, TANH[4]), mx, TANH[5]);
+  return zp_copysign(mm, x);
+ } 
+ return zp_copysign(1.0f, x);
+}
 
 
 
