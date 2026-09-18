@@ -30,41 +30,5 @@ uint8_t zp_collision2d_collide(zp_manifold2d *const zp_restrict out, const zp_bo
   return 0;
  return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
 
-/*
- switch(((a->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) >> 13) | ((b->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) >> 10)) {
-  case (ZP_BODY_MOVEMENT_DYNAMIC_2D >> 13) | (ZP_BODY_MOVEMENT_DYNAMIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-  case (ZP_BODY_MOVEMENT_DYNAMIC_2D >> 13) | (ZP_BODY_MOVEMENT_KINEMATIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  case (ZP_BODY_MOVEMENT_DYNAMIC_2D >> 13) | (ZP_BODY_MOVEMENT_STATIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-
-  case (ZP_BODY_MOVEMENT_KINEMATIC_2D >> 13) | (ZP_BODY_MOVEMENT_DYNAMIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-  case (ZP_BODY_MOVEMENT_KINEMATIC_2D >> 13) | (ZP_BODY_MOVEMENT_KINEMATIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-  case (ZP_BODY_MOVEMENT_KINEMATIC_2D >> 13) | (ZP_BODY_MOVEMENT_STATIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-
-  case (ZP_BODY_MOVEMENT_STATIC_2D >> 13) | (ZP_BODY_MOVEMENT_DYNAMIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-  case (ZP_BODY_MOVEMENT_STATIC_2D >> 13) | (ZP_BODY_MOVEMENT_KINEMATIC_2D >> 10):
-   return function_luts[a->_head._flags & ZP_BODY_MASK_2D][b->_head._flags & ZP_BODY_MASK_2D](out, a, b);
-  break;
-  case (ZP_BODY_MOVEMENT_STATIC_2D >> 13) | (ZP_BODY_MOVEMENT_STATIC_2D >> 10):
-   return 0;
-  break;
- }
- assert(0 && "unreachable");
- zp_assume(0);
- */
 }
 
