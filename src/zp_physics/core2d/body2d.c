@@ -50,89 +50,49 @@ zp_hot zp_inline void update_aabb(zp_body2d *const zp_restrict body) {
 
 
 void zp_body2d_updatev(zp_body2d *const zp_restrict body, const void *const zp_restrict world, const float dt) {
-
- switch(body->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) {
-  case ZP_BODY_MOVEMENT_DYNAMIC_2D:
-  {
-   const zp_world2d *const ctx = (zp_world2d*)world;
-   const zp_vec2 dt_vec = zp_stv2(dt);
-   const zp_vec2 inv_mass = zp_stv2(body->_head._inv_mass);
+ const zp_world2d *const ctx = (zp_world2d*)world;
+ const zp_vec2 dt_vec = zp_stv2(dt);
+ const zp_vec2 inv_mass = zp_stv2(body->_head._inv_mass);
  
-   zp_vec2 linear_acceleration = zp_fma2(body->_head._force, inv_mass, ctx->_gravity);
-   body->_head._velocity = zp_fma2(linear_acceleration, dt_vec, body->_head._velocity);
+ zp_vec2 linear_acceleration = zp_fma2(body->_head._force, inv_mass, ctx->_gravity);
+ body->_head._velocity = zp_fma2(linear_acceleration, dt_vec, body->_head._velocity);
 
-   float angular_acceleration = body->_head._torque * body->_head._inv_inertia;
-   body->_head._omega = zp_fma(angular_acceleration, dt, body->_head._omega);
+ float angular_acceleration = body->_head._torque * body->_head._inv_inertia;
+ body->_head._omega = zp_fma(angular_acceleration, dt, body->_head._omega);
 
-   body->_head._torque = 0.0f;
-   body->_head._force = zp_stv2(0.0f);
-
-  }
-  break;
-  case ZP_BODY_MOVEMENT_KINEMATIC_2D:
-  {
-   return;
-  }
-  break;
-  case ZP_BODY_MOVEMENT_STATIC_2D:
-  {
-  	return;
-  }
-  break;
-  default :
-   assert(0);
-   zp_unreachable();
-  break;
- }
+ body->_head._torque = 0.0f;
+ body->_head._force = zp_stv2(0.0f);
 }
 
 
 
 void zp_body2d_updatep(zp_body2d *const zp_restrict body, const void *const zp_restrict world, const float dt) {
  (void)world;
- switch(body->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) {
-  case ZP_BODY_MOVEMENT_DYNAMIC_2D:
-  {
-   zp_vec2 dt_vec = zp_stv2(dt);
 
-   float ld = zp_exp2(dt * body->_head._linear_damping);
-   body->_head._velocity.x *= ld;
-   body->_head._velocity.y *= ld;
+ zp_vec2 dt_vec = zp_stv2(dt);
+
+ float ld = zp_exp2(dt * body->_head._linear_damping);
+ body->_head._velocity.x *= ld;
+ body->_head._velocity.y *= ld;
    
-   body->_head._omega *= zp_exp2(dt * body->_head._angular_damping);
+ body->_head._omega *= zp_exp2(dt * body->_head._angular_damping);
 
-   const float o_epsilon = 0.01f;
+ const float o_epsilon = 0.01f;
    
-   if(zp_abs(body->_head._omega) > o_epsilon) {
-    float omega = body->_head._omega * dt;
-    zp_complex omega_complex;
-    omega_complex.x = 1.0f - 0.5f * omega * omega;
-    omega_complex.y = omega;
-    body->_head._rotation = zp_cmul(omega_complex, body->_head._rotation);
-    body->_head._rotation = zp_unit2(body->_head._rotation);
-   }
-  
-   float dt_a = zp_dot2(body->_head._velocity, body->_head._velocity);
-   const float v_epsilon = 0.1f;
-   if(dt_a > v_epsilon) 
-    body->_head._position = zp_fma2(body->_head._velocity, dt_vec, body->_head._position);   
-   update_aabb(body);
-  }
-  break;
-  case ZP_BODY_MOVEMENT_KINEMATIC_2D:
-  {
-
-  }
-  break;
-  case ZP_BODY_MOVEMENT_STATIC_2D:
-  {
-  }
-  break;
-  default :
-   assert(0);
-   zp_unreachable();
-  break;
+ if(zp_abs(body->_head._omega) > o_epsilon) {
+  float omega = body->_head._omega * dt;
+  zp_complex omega_complex;
+  omega_complex.x = 1.0f - 0.5f * omega * omega;
+  omega_complex.y = omega;
+  body->_head._rotation = zp_cmul(omega_complex, body->_head._rotation);
+  body->_head._rotation = zp_unit2(body->_head._rotation);
  }
+  
+ float dt_a = zp_dot2(body->_head._velocity, body->_head._velocity);
+ const float v_epsilon = 0.1f;
+ if(dt_a > v_epsilon) 
+  body->_head._position = zp_fma2(body->_head._velocity, dt_vec, body->_head._position);   
+ update_aabb(body);
 }
 
 

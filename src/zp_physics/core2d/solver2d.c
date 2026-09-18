@@ -10,16 +10,7 @@
 void zp_manifold2d_soft_prepare_contact(zp_manifold2d *const zp_restrict m, void *const zp_restrict w, const zp_solver_input2d *const input) {
  zp_world2d *const world = (zp_world2d*)w;
 
- /* 
-  checking for missing body, because if you remove a body, that would 
-  results in a stale object id, but it is fine, because by adding these checks
-  can remove a body as fast as O(1)
- */
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_a] >= world->_body_container._size))
-  return;
  zp_body2d *const body_a = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_a);
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_b] >= world->_body_container._size))
-  return;
  zp_body2d *const body_b = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_b);
 
  zp_compiler_memory_barrier();
@@ -39,8 +30,7 @@ void zp_manifold2d_soft_prepare_contact(zp_manifold2d *const zp_restrict m, void
  float b_restitution = body_b->_head._restitution;
 
 
- float restitution_threshold = zp_sqrt(zp_dot2(world->_gravity, world->_gravity)) * 0.4f * input->_dt;
-
+ (void)input;
 
  float inv_mass = a_inv_mass + b_inv_mass;
  float e = zp_min(a_restitution, b_restitution);
@@ -70,9 +60,10 @@ void zp_manifold2d_soft_prepare_contact(zp_manifold2d *const zp_restrict m, void
   */
   zp_vec2 relative_vel = zp_sub2(b_velocity, a_velocity);
   float impact_speed = zp_dot2(relative_vel, contact->_normal);
-
+  
+  float bounciness_response_factor = 0.28f;
   /* 
-   hyperbolic tangent gives a smooth transition betweew low up to max resitution coeffs
+   hyperbolic tangent gives a smooth transition betweew low and max resitution coeffs
 
 
    tanh(x)
@@ -99,10 +90,8 @@ void zp_manifold2d_soft_prepare_contact(zp_manifold2d *const zp_restrict m, void
   -------------------------------------
   
   */
-  if(impact_speed < -0.1f) {
-   float x = (-impact_speed - restitution_threshold);
-   contact->_bias = (-impact_speed * e) * zp_tanh(zp_copysign(x, restitution_threshold));
-  }
+  float x = impact_speed * bounciness_response_factor;
+  contact->_bias = (impact_speed * e) * zp_tanh(zp_min(x, 0.0f));
  }
 }
 
@@ -113,12 +102,7 @@ void zp_manifold2d_soft_presolve_contact(zp_manifold2d *const zp_restrict m, voi
  
  zp_world2d *const world = (zp_world2d*)w;
  
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_a] >= world->_body_container._size))
-  return;
  zp_body2d *const body_a = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_a);
-  
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_b] >= world->_body_container._size))
-  return;
  zp_body2d *const body_b = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_b);
 
  zp_compiler_memory_barrier();
@@ -166,12 +150,7 @@ void zp_manifold2d_soft_presolve_contact(zp_manifold2d *const zp_restrict m, voi
 void zp_manifold2d_soft_solve_contact(zp_manifold2d *const zp_restrict m, void *const zp_restrict w, const zp_solver_input2d *const input) {
  zp_world2d *const world = (zp_world2d*)w;
  
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_a] >= world->_body_container._size))
-  return;
  zp_body2d *const body_a = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_a);
-  
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_b] >= world->_body_container._size))
-  return;
  zp_body2d *const body_b = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_b);
 
  zp_compiler_memory_barrier();
@@ -240,15 +219,8 @@ void zp_manifold2d_soft_solve_contact(zp_manifold2d *const zp_restrict m, void *
 
   /* logarithmic with damping-like behaviour */
   penetration_error = zp_log2(penetration_error + 1.0f) * 0.69314718f;
-  
+	 penetration_error = -(vn - contact->_bias) + penetration_error;
 
-  if(vn < contact->_bias) {
-   penetration_error = -(vn - contact->_bias) + penetration_error;
-  } else {
-   penetration_error = -vn + penetration_error;
-  }
-
-	
   float mass = contact->_mass_normal * input->_mass_coeff;
 	 j = mass * penetration_error;
   j -= input->_impulse_coeff * contact->_accumulated_normal;
@@ -323,12 +295,7 @@ void zp_manifold2d_soft_solve_contact(zp_manifold2d *const zp_restrict m, void *
 void zp_manifold2d_soft_relaxation(zp_manifold2d *const zp_restrict m, void *const zp_restrict w, const zp_solver_input2d *const input) {
  zp_world2d *const world = (zp_world2d*)w;
  
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_a] >= world->_body_container._size))
-  return;
  zp_body2d *const body_a = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_a);
-  
- if(zp_unlikely(world->_body_container._to_index_lut[m->_body_b] >= world->_body_container._size))
-  return;
  zp_body2d *const body_b = (zp_body2d*)zp_container_get(&world->_body_container, m->_body_b);
 
  zp_compiler_memory_barrier();
@@ -400,14 +367,8 @@ void zp_manifold2d_soft_relaxation(zp_manifold2d *const zp_restrict m, void *con
 
   /* logarithmic with damping-like behaviour */
   penetration_error = zp_log2(penetration_error + 1.0f) * 0.69314718f;
-  
-  
-  if(vn < contact->_bias) {
-   penetration_error = -(vn - contact->_bias) + penetration_error;
-  } else {
-   penetration_error = -vn + penetration_error;
-  }
-  
+  penetration_error = -(vn - contact->_bias) + penetration_error;
+
   
 	 j = contact->_mass_normal * penetration_error;
 

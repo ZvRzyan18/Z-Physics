@@ -7,10 +7,22 @@
 #include <stdlib.h>
 #include <assert.h>
 
+/* condition for body sorting */
+static int sort_body_movement(zp_body2d *a, zp_body2d *b) {
+ return (a->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) > (b->_head._flags & ZP_BODY_MOVEMENT_MASK_2D);
+}
+
+
 
 zp_cold int zp_world2d_init(zp_world2d **const zp_restrict world, const zp_create_world2d *const zp_restrict data) {
  *world = (zp_world2d*)malloc(sizeof(zp_world2d));
  zp_world2d *world_instance = *world;
+ 
+ memset(world_instance, 0, sizeof(zp_world2d));
+ 
+ world_instance->_dynamic_count = 0;
+ world_instance->_kinematic_count = 0;
+ world_instance->_sort_body = 0;
  world_instance->_growth_base = data->_growth_base_rate;
  if(zp_unlikely(zp_container_init(&world_instance->_body_container, sizeof(zp_body2d), data->_bodies_initial_reserve, world_instance->_growth_base)))
   return -1;
@@ -37,6 +49,11 @@ zp_cold void zp_world2d_destroy(zp_world2d *const zp_restrict world) {
 zp_hot void zp_world2d_update(zp_world2d *const zp_restrict world, const float dt) {
  zp_body2d *const start_body = (zp_body2d*)world->_body_container._bytes;
  
+ 
+ if(zp_unlikely(world->_sort_body)) {
+  zp_container_insertion_sort(&world->_body_container, (void*)sort_body_movement);
+  world->_sort_body = 0;
+ }
 
  /* prototype broadphase : bruite force */
  for(uint16_t i = 0; i < world->_body_container._size; i++) {
@@ -59,6 +76,8 @@ zp_hot void zp_world2d_update(zp_world2d *const zp_restrict world, const float d
    
   }
  }
+
+ zp_contacthash2d_remove_unused(&world->_contacts);
 
  const float devided_dt = dt * world->_inv_timestep_substep;
 
@@ -87,8 +106,7 @@ zp_hot void zp_world2d_update(zp_world2d *const zp_restrict world, const float d
  input._mass_coeff = a2 * a3;
  input._impulse_coeff = a3;
 
-
- for(uint16_t i = 0; i < world->_contacts._memory_pool._size; i++) {
+ for(size_t i = 0; i < world->_contacts._memory_pool._size; i++) {
   zp_contacthash2d_node *const node = ((zp_contacthash2d_node*)world->_contacts._memory_pool._bytes) + i;
   zp_manifold2d *const manifold = &node->_value;
   zp_manifold2d_soft_prepare_contact(manifold, (void*)world, &input);
@@ -97,58 +115,84 @@ zp_hot void zp_world2d_update(zp_world2d *const zp_restrict world, const float d
  /*
   Temporal coherence, the contact data has to be reused
   across several frames.
- */
- 
+ */ 
  for(uint8_t aa = 0; aa < world->_time_substeps; aa++) {
 
- for(uint16_t i = 0; i < world->_contacts._memory_pool._size; i++) {
+ for(size_t i = 0; i < world->_contacts._memory_pool._size; i++) {
   zp_contacthash2d_node *const node = ((zp_contacthash2d_node*)world->_contacts._memory_pool._bytes) + i;
   zp_manifold2d *const manifold = &node->_value;
   zp_manifold2d_soft_presolve_contact(manifold, (void*)world, &input);
  }
 
- for(uint16_t i = 0; i < world->_body_container._size; i++) {
+ //for(uint16_t i = 0; i < world->_body_container._size; i++) {
+ for(size_t i = 0; i < world->_dynamic_count; i++) {
   zp_body2d *const body_a = start_body + i;
   zp_body2d_updatev(body_a, world, devided_dt);
  }
  
  for(int substeps = 0; substeps < world->_solver_substeps; substeps++) {
-  for(uint16_t i = 0; i < world->_contacts._memory_pool._size; i++) {
+  for(size_t i = 0; i < world->_contacts._memory_pool._size; i++) {
    zp_contacthash2d_node *const node = ((zp_contacthash2d_node*)world->_contacts._memory_pool._bytes) + i;
    zp_manifold2d *const manifold = &node->_value;
    zp_manifold2d_soft_solve_contact(manifold, (void*)world, &input);
   }
  }
 
- for(uint16_t i = 0; i < world->_body_container._size; i++) {
+ //for(uint16_t i = 0; i < world->_body_container._size; i++) {
+ size_t position_integration_size = world->_dynamic_count + world->_kinematic_count;
+ for(size_t i = 0; i < position_integration_size; i++) {
   zp_body2d *const body_a = start_body + i;
   zp_body2d_updatep(body_a, world, devided_dt);
  }
  /* relaxation, improve stability */
- 
- for(uint16_t i = 0; i < world->_contacts._memory_pool._size; i++) {
+ for(size_t i = 0; i < world->_contacts._memory_pool._size; i++) {
   zp_contacthash2d_node *const node = ((zp_contacthash2d_node*)world->_contacts._memory_pool._bytes) + i;
   zp_manifold2d *const manifold = &node->_value;
   zp_manifold2d_soft_relaxation(manifold, (void*)world, &input);
  }
  }
-
- zp_contacthash2d_remove_unused(&world->_contacts);
 }
 
 
 zp_handle zp_world2d_create_body(zp_world2d *const zp_restrict world, const void *const zp_restrict value) {
- uint16_t id = zp_container_acquire(&world->_body_container);
+ zp_container_id id = zp_container_acquire(&world->_body_container);
  zp_body2d *const body = (zp_body2d*)zp_container_get(&world->_body_container, id);
  memset(body, 0, sizeof(zp_body2d));
  zp_body2d_init(body, value);
  body->_head._id = id;
-
+ 
+ {
+  /* sort the body*/
+  switch(body->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) {
+   case ZP_BODY_MOVEMENT_DYNAMIC_2D:
+    world->_dynamic_count++;
+   break;
+   case ZP_BODY_MOVEMENT_KINEMATIC_2D:
+    world->_kinematic_count++;
+   break;
+  }
+  world->_sort_body = 1;
+ }
+ 
  return ZP_HANDLE_FLAG_IS_BODY | ((zp_handle)id);
 }
 
 
 void zp_world2d_remove_body(zp_world2d *const zp_restrict world, const zp_handle id) {
+ zp_body2d *const body = (zp_body2d*)zp_container_get(&world->_body_container, (zp_container_id)id);
+
+ {
+  switch(body->_head._flags & ZP_BODY_MOVEMENT_MASK_2D) {
+   case ZP_BODY_MOVEMENT_DYNAMIC_2D:
+    world->_dynamic_count--;
+   break;
+   case ZP_BODY_MOVEMENT_KINEMATIC_2D:
+    world->_kinematic_count--;
+   break;
+  }
+  world->_sort_body = 1;
+ }
+ 
  zp_container_release(&world->_body_container, (zp_container_id)id);
 }
 

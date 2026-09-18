@@ -50,7 +50,7 @@ zp_cold zp_noinline static int resize(zp_container *const zp_restrict c) {
 
  if(zp_unlikely(!new_container._bytes))
   return -1;
-  
+ 
 	const size_t _bytes_size = c->_max_size * new_container._stride;
 	const size_t _helper_size = sizeof(zp_container_id) * c->_max_size;
 
@@ -59,7 +59,7 @@ zp_cold zp_noinline static int resize(zp_container *const zp_restrict c) {
  memcpy(new_container._to_id_lut, c->_to_id_lut, _helper_size);
  memcpy(new_container._to_index_lut, c->_to_index_lut, _helper_size);
 
- zp_container_id i = new_container._size;
+ zp_container_id i = c->_max_size;
  while(i < new_container._max_size) {
   new_container._to_index_lut[i] = i;
   new_container._free_list[i] = i;
@@ -201,6 +201,26 @@ void zp_container_release(zp_container *const zp_restrict c, const zp_container_
  }
  c->_free_list[last_index] = id;
  c->_size--;
+}
+
+
+zp_cold void zp_container_insertion_sort(zp_container *const zp_restrict c, int (*should_swap)(void*, void*)) {
+ for(int i = 1; i < c->_size; i++) {
+  int j = i;
+  int jm1 = j - 1;
+  void *j_data = c->_bytes + (j * c->_stride);
+  void *jm1_data = c->_bytes + (jm1 * c->_stride);
+  
+  while (j > 0 && should_swap(jm1_data, j_data)) {
+   memswap(j_data, jm1_data, c->_stride);
+   zp_container_id j_id = c->_to_id_lut[j];
+   zp_container_id jm1_id = c->_to_id_lut[jm1];
+   
+   memswap(&c->_to_id_lut[j], &c->_to_id_lut[jm1], sizeof(zp_container_id));
+   memswap(&c->_to_index_lut[j_id], &c->_to_index_lut[jm1_id], sizeof(zp_container_id));
+   j--;
+  }
+ }
 }
 
 

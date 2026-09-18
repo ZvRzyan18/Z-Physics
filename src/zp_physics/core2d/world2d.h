@@ -14,6 +14,10 @@ struct zp_world2d {
  float            _growth_base;
  uint16_t         _solver_substeps;
  uint16_t         _time_substeps;
+ 
+ zp_container_id  _dynamic_count;
+ zp_container_id  _kinematic_count;
+ uint8_t          _sort_body;
 };
 
 #endif

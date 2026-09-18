@@ -18,3 +18,11 @@
 
 • use unlikely hint (asin, acos) clamp
 
+• agressively optimize integration through sorting
+
+• remove object valid checks inside of solver
+
+• optimize hyperbolic tangent
+
+• add bounciness response factor
+
